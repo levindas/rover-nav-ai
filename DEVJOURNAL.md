@@ -220,3 +220,74 @@ cannot be controlled — only Revolute joints can spin.
 | setJointMotorControl2 | Controls joint motors in PyBullet |
 | VELOCITY_CONTROL | Control mode for setting wheel speed |
 | Differential Drive | Steering system using wheel speed differences |
+
+---
+
+## Entry 5 — Perception (Giving the Rover Eyes)
+
+### What I Built
+A perception pipeline that captures images from a virtual camera
+mounted on the rover and detects red obstacles using OpenCV color
+detection.
+
+### Why This Way
+
+**Virtual camera in PyBullet**
+PyBullet can render images from any point in the simulation world.
+We place a virtual camera on the rover so we get exactly what the
+rover would see — not our outside observer view. This is how real
+robots work — they only know what their sensors tell them.
+
+**RGBA to BGR conversion**
+PyBullet outputs images in RGBA format (4 channels including
+transparency). OpenCV works in BGR format (3 channels). We convert
+between them using cv2.cvtColor so OpenCV can process the image.
+
+**Why HSV over RGB for color detection**
+HSV separates the actual color (Hue) from brightness (Value).
+A red box in shadow and a red box in bright light have very different
+RGB values but similar HSV hue values. This makes detection much
+more reliable across different lighting conditions.
+
+**Why red wraps around in HSV**
+Red is special in HSV — it appears at both ends of the hue spectrum
+(0-10 and 160-180). So we need two masks and combine them with
+bitwise_or to catch all red pixels.
+
+**Contours**
+After creating the mask we use findContours to trace the outlines
+of white regions. Each contour = one detected obstacle. We filter
+out tiny contours (under 500px area) to ignore noise.
+
+**Morphological operations**
+MORPH_OPEN removes small noisy spots from the mask.
+MORPH_CLOSE fills small holes inside detected regions.
+These clean up the mask before we find contours.
+
+### What I Learned
+- PyBullet can render images from any camera position in the world
+- computeViewMatrix defines where the camera is and what it looks at
+- computeProjectionMatrixFOV defines the camera lens properties
+- Images are just numpy arrays — rows and columns of pixel values
+- HSV is better than RGB for color detection
+- Red wraps around the HSV hue spectrum — needs two ranges
+- A mask is a black and white image — white = color match
+- Contours are outlines of regions in a mask
+- cv2.boundingRect gives us x, y, width, height of a detection
+
+### Upgrade Note
+Currently using OpenCV color detection for red boxes in simulation.
+When upgrading to real hardware swap this for YOLOv8 running on
+real camera feed for proper object detection on real world objects.
+
+### Tools Introduced
+| Tool | Purpose |
+|---|---|
+| cv2.cvtColor | Convert between color spaces |
+| cv2.inRange | Create a mask for a color range |
+| cv2.findContours | Find outlines of regions in a mask |
+| cv2.boundingRect | Get bounding box of a contour |
+| cv2.morphologyEx | Clean up masks using morphological operations |
+| p.getCameraImage | Capture image from PyBullet virtual camera |
+| p.computeViewMatrix | Define camera position and direction |
+| p.computeProjectionMatrixFOV | Define camera lens properties |
