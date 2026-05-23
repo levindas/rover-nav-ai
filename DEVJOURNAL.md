@@ -146,3 +146,53 @@ it realistic. We'll upgrade to heightmap terrain later.
 | createCollisionShape | Defines physics boundary of an object |
 | createVisualShape | Defines visual appearance of an object |
 | createMultiBody | Combines shapes into a physical object in the world |
+
+---
+
+## Entry 4 — Rover Movement (Differential Drive)
+
+### What I Built
+Added movement control to the rover using differential drive. The rover
+can now move forward, backward, turn, and spin in place by controlling
+wheel speeds independently.
+
+### Why This Way
+
+**Velocity Control**
+We control wheels by setting their target spin speed using
+setJointMotorControl2. This mimics how real motor controllers work —
+you tell the motor what speed to run at and it applies the necessary
+force to get there.
+
+**Differential Drive**
+The Husky uses differential drive — the same way a tank steers.
+No steering wheel. Instead the difference in speed between left and
+right wheels determines direction. Equal speeds = straight.
+Opposite speeds = spin in place. This is the most common drive
+system for ground rovers.
+
+**240 steps = 1 second**
+The simulation runs at 240Hz. So to run something for 2 seconds
+we loop 240 × 2 = 480 times. This is how we control timing
+precisely in simulation.
+
+**Joint indices**
+We found the wheel joints by inspecting the URDF with inspect_rover.py.
+Joints 2,3,4,5 are the four wheels. Fixed joints (body, bumpers, plates)
+cannot be controlled — only Revolute joints can spin.
+
+### What I Learned
+- setJointMotorControl2 controls individual joints (motors)
+- VELOCITY_CONTROL mode sets target spin speed
+- Positive velocity = forward, negative = backward
+- Differential drive steers by speed difference between left and right
+- 240 simulation steps = 1 real second at 240Hz
+- Fixed joints connect parts rigidly — they cannot move
+- Revolute joints rotate around an axis — these are our wheels
+
+### Tools Introduced
+| Tool | Purpose |
+|---|---|
+| setJointMotorControl2 | Controls joint motors in PyBullet |
+| VELOCITY_CONTROL | Control mode for setting wheel speed |
+| Differential Drive | Steering system using wheel speed differences |
