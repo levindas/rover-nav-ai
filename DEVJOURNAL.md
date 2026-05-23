@@ -2,6 +2,30 @@
 
 ---
 
+## 🗺️ Architecture Decisions & Upgrade Path
+
+### Current Version — Simplified Autonomous System
+- 2D Occupancy Grid mapping (not full 3D)
+- Partial SLAM — rover builds map as it explores
+- A* path planning on partial map with replanning
+- Flat terrain with box obstacles
+- YOLOv8 camera based perception
+
+### Future Version — Full Autonomous System
+- 3D Point Cloud mapping
+- Full SLAM (Simultaneous Localization and Mapping)
+- Dynamic replanning with full SLAM integration
+- Heightmap based 3D terrain
+- LiDAR + Depth camera perception
+
+### Why this progression?
+Started simple to get a working end to end system first.
+Each component is designed to be swappable — upgrading one
+part doesn't break the rest. This is called modular architecture
+and is standard practice in real robotics systems.
+
+---
+
 ## Entry 1 — Project Setup & Planning
 
 ### What I Built
