@@ -2,52 +2,84 @@ import pybullet as p
 import pybullet_data
 import time
 
+# Wheel joint indices we found from inspect_rover.py
+FRONT_LEFT_WHEEL = 2
+FRONT_RIGHT_WHEEL = 3
+REAR_LEFT_WHEEL = 4
+REAR_RIGHT_WHEEL = 5
+
+# All wheel joints together for easy access
+ALL_WHEELS = [FRONT_LEFT_WHEEL, FRONT_RIGHT_WHEEL,
+              REAR_LEFT_WHEEL, REAR_RIGHT_WHEEL]
+
+# Left side and right side wheels for differential drive steering
+LEFT_WHEELS = [FRONT_LEFT_WHEEL, REAR_LEFT_WHEEL]
+RIGHT_WHEELS = [FRONT_RIGHT_WHEEL, REAR_RIGHT_WHEEL]
+
+
+def move_rover(rover, left_speed, right_speed, max_force=10):
+    """
+    Moves the rover using differential drive.
+
+    left_speed  : speed for left wheels  (positive = forward)
+    right_speed : speed for right wheels (positive = forward)
+    max_force   : maximum motor force in Newtons
+
+    Examples:
+        move_rover(rover,  5,  5)  → move forward
+        move_rover(rover, -5, -5)  → move backward
+        move_rover(rover,  2,  5)  → turn left
+        move_rover(rover,  5,  2)  → turn right
+        move_rover(rover, -5,  5)  → spin in place left
+        move_rover(rover,  5, -5)  → spin in place right
+        move_rover(rover,  0,  0)  → stop
+    """
+
+    for wheel in LEFT_WHEELS:
+        p.setJointMotorControl2(
+            bodyUniqueId=rover,
+            jointIndex=wheel,
+            controlMode=p.VELOCITY_CONTROL,
+            targetVelocity=left_speed,
+            force=max_force
+        )
+
+    for wheel in RIGHT_WHEELS:
+        p.setJointMotorControl2(
+            bodyUniqueId=rover,
+            jointIndex=wheel,
+            controlMode=p.VELOCITY_CONTROL,
+            targetVelocity=right_speed,
+            force=max_force
+        )
+
 
 def create_obstacles():
     """
     Creates simple box obstacles in the simulation world.
-    Each obstacle needs two things:
-    1. A collision shape - what the physics engine uses for collisions
-    2. A visual shape - what we actually see in the window
-    Then we combine them into a single body and place it in the world.
     """
-
     obstacles = []
 
-    # Define obstacle positions [x, y, z]
-    # We place them at different spots around the rover (which is at 0,0)
     obstacle_positions = [
-        [2, 0, 0.5],    # directly in front
-        [-2, 1, 0.5],   # behind and to the side
-        [1, 2, 0.5],    # to the right
-        [-1, -2, 0.5],  # to the left
-        [3, 3, 0.5],    # far corner
+        [2, 0, 0.5],
+        [-2, 1, 0.5],
+        [1, 2, 0.5],
+        [-1, -2, 0.5],
+        [3, 3, 0.5],
     ]
 
     for position in obstacle_positions:
-
-        # STEP 1: Create the collision shape
-        # This is what the physics engine uses to detect collisions
-        # halfExtents means half the size on each side
-        # so [0.5, 0.5, 0.5] creates a 1x1x1 meter box
         collision_shape = p.createCollisionShape(
             p.GEOM_BOX,
             halfExtents=[0.5, 0.5, 0.5]
         )
 
-        # STEP 2: Create the visual shape
-        # This is purely what we see - color, appearance
-        # rgbaColor = [Red, Green, Blue, Alpha(opacity)]
-        # [1, 0, 0, 1] = solid red
         visual_shape = p.createVisualShape(
             p.GEOM_BOX,
             halfExtents=[0.5, 0.5, 0.5],
             rgbaColor=[1, 0, 0, 1]
         )
 
-        # STEP 3: Combine into a body and place it in the world
-        # mass=0 means the obstacle is STATIC - it won't move when hit
-        # if mass was > 0 the rover could push it around
         obstacle = p.createMultiBody(
             baseMass=0,
             baseCollisionShapeIndex=collision_shape,
@@ -62,34 +94,28 @@ def create_obstacles():
 
 def create_simulation():
     """
-    Creates a basic PyBullet simulation environment with:
-    - A physics server (the engine running everything)
-    - A ground plane (so objects don't fall forever)
-    - A Husky rover model (our rover)
-    - Gravity (like the real world)
-    - Obstacles (things to navigate around)
+    Creates the simulation world and runs a simple movement demo.
+    The rover will:
+    1. Move forward for 2 seconds
+    2. Turn right for 1 second
+    3. Move forward for 2 seconds
+    4. Stop
     """
 
-    # Connect to PyBullet and open the 3D window
+    # Connect and set up world
     physics_client = p.connect(p.GUI)
-
-    # Tell PyBullet where to find its built in URDF models
     p.setAdditionalSearchPath(pybullet_data.getDataPath())
-
-    # Set gravity - real world is 9.8 m/s² downward
     p.setGravity(0, 0, -9.8)
 
-    # Load the ground plane
+    # Load ground and rover
     ground = p.loadURDF("plane.urdf")
-
-    # Load the Husky rover slightly above ground
     rover = p.loadURDF("husky/husky.urdf", [0, 0, 0.1])
 
-    # Add obstacles to the world
+    # Add obstacles
     obstacles = create_obstacles()
-    print(f"✅ Added {len(obstacles)} obstacles to the world")
+    print(f"✅ Added {len(obstacles)} obstacles")
 
-    # Position the camera for a good top-down-ish view
+    # Set up camera
     p.resetDebugVisualizerCamera(
         cameraDistance=6.0,
         cameraYaw=45,
@@ -97,10 +123,41 @@ def create_simulation():
         cameraTargetPosition=[0, 0, 0]
     )
 
-    print("✅ Simulation started! Close the window or press Ctrl+C to stop.")
+    print("✅ Simulation started!")
+    print("📋 Running movement demo...")
 
-    # Run the simulation loop
     try:
+        # --- MOVEMENT DEMO ---
+        # Each step runs for a number of simulation steps
+        # 240 steps = 1 second (because we run at 240Hz)
+
+        # Phase 1: Move forward for 2 seconds
+        print("➡️  Moving forward...")
+        for _ in range(240 * 2):
+            move_rover(rover, left_speed=5, right_speed=5)
+            p.stepSimulation()
+            time.sleep(1/240)
+
+        # Phase 2: Turn right for 1 second
+        print("↩️  Turning right...")
+        for _ in range(240 * 1):
+            move_rover(rover, left_speed=5, right_speed=-5)
+            p.stepSimulation()
+            time.sleep(1/240)
+
+        # Phase 3: Move forward again for 2 seconds
+        print("➡️  Moving forward again...")
+        for _ in range(240 * 2):
+            move_rover(rover, left_speed=5, right_speed=5)
+            p.stepSimulation()
+            time.sleep(1/240)
+
+        # Phase 4: Stop
+        print("🛑 Stopping...")
+        move_rover(rover, left_speed=0, right_speed=0)
+
+        # Keep window open so we can see the final position
+        print("✅ Demo complete! Close the window or press Ctrl+C to exit.")
         while True:
             p.stepSimulation()
             time.sleep(1/240)
