@@ -56,3 +56,49 @@ before real hardware exists. Used by Google DeepMind and OpenAI for
 robotics research. Three layers: physics engine, the world, simulation loop.
 
 ---
+---
+
+## Entry 2 — PyBullet Simulation Environment
+
+### What I Built
+A basic 3D simulation world using PyBullet with a ground plane and a
+Husky rover model loaded into it.
+
+### Why This Way
+
+**Simulation before AI components**
+We need a world for the AI to live in first. Just like a video game —
+you build the world before adding characters and logic. Without a
+simulation we'd have no way to see, test or run anything we build.
+
+**Husky URDF**
+URDF (Unified Robot Description Format) is an XML file that describes
+a robot's appearance, how its parts connect, and its physical properties.
+PyBullet comes with built in URDF models — Husky is a real 4 wheeled
+rover made by Clearpath Robotics. Perfect for our use case.
+
+**240 steps per second**
+PyBullet's simulation loop runs at 240 Hz (steps per second). This is
+the standard rate for stable physics simulation — fast enough to be
+accurate, not so fast it overloads the CPU.
+
+**p.GUI vs p.DIRECT**
+p.GUI opens a visible 3D window. p.DIRECT runs the simulation invisibly
+in the background — useful later when we're running automated tests and
+don't need to see the window.
+
+### What I Learned
+- PyBullet is just a Python library — no separate app to install
+- It uses OpenGL to render the 3D window (same technology as video games)
+- URDF files describe robots — shape, joints, weight, friction etc.
+- Gravity has to be set manually in PyBullet — nothing is assumed
+- The simulation loop steps physics forward continuously to keep it alive
+- p.setAdditionalSearchPath tells PyBullet where to find built in models
+
+### Tools Introduced
+| Tool | Purpose |
+|---|---|
+| PyBullet | Physics simulation engine |
+| pybullet_data | Built in URDF models that come with PyBullet |
+| URDF | File format for describing robots |
+| OpenGL | Graphics rendering (used internally by PyBullet) |
