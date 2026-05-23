@@ -56,7 +56,6 @@ before real hardware exists. Used by Google DeepMind and OpenAI for
 robotics research. Three layers: physics engine, the world, simulation loop.
 
 ---
----
 
 ## Entry 2 — PyBullet Simulation Environment
 
