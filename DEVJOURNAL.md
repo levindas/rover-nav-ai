@@ -101,3 +101,48 @@ don't need to see the window.
 | pybullet_data | Built in URDF models that come with PyBullet |
 | URDF | File format for describing robots |
 | OpenGL | Graphics rendering (used internally by PyBullet) |
+
+---
+
+## Entry 3 — Adding Simple Obstacles to the Simulation
+
+### What I Built
+Added 5 static red box obstacles scattered around the rover in the
+simulation world.
+
+### Why This Way
+
+**Why obstacles are needed**
+Without obstacles there is no navigation problem to solve. The rover
+needs things to detect, map and avoid. Obstacles are what make the
+whole AI system necessary.
+
+**Two shapes per obstacle**
+Every object in PyBullet needs two shapes:
+- Collision shape — used by the physics engine to detect collisions
+- Visual shape — purely what we see in the window
+They look the same but serve completely different purposes.
+
+**mass=0 means static**
+Setting mass to 0 makes an object static — fixed in place, unmovable.
+If mass was greater than 0 the rover could push the boxes around.
+Static obstacles are more realistic for walls, rocks, and terrain features.
+
+**Simple boxes first**
+Started with simple box shapes before complex terrain. This is standard
+practice in robotics — get the system working simply first, then make
+it realistic. We'll upgrade to heightmap terrain later.
+
+### What I Learned
+- PyBullet shapes need both a collision shape and a visual shape
+- rgbaColor = [Red, Green, Blue, Alpha] — values between 0 and 1
+- halfExtents means half the size on each axis — so [0.5,0.5,0.5] = 1x1x1m box
+- mass=0 makes objects static (unmovable)
+- Obstacle positions are set as [x, y, z] coordinates in meters
+
+### Tools Introduced
+| Tool | Purpose |
+|---|---|
+| createCollisionShape | Defines physics boundary of an object |
+| createVisualShape | Defines visual appearance of an object |
+| createMultiBody | Combines shapes into a physical object in the world |
